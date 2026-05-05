@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Internal Visualization Prompt Generator</title>
+  <style>
+    :root {
+      --bg: #05070d;
+      --panel: #0d1322;
+      --panel-2: #111a2d;
+      --text: #e8f4ff;
+      --muted: #92a7bd;
+      --cyan: #38d5ff;
+      --teal: #24e2b8;
+      --border: rgba(120, 210, 255, 0.22);
+      --shadow: 0 20px 70px rgba(0, 0, 0, 0.45);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 0%, rgba(56, 213, 255, 0.18), transparent 34%),
+        radial-gradient(circle at 90% 20%, rgba(36, 226, 184, 0.12), transparent 28%),
+        linear-gradient(135deg, #03040a 0%, #08111f 55%, #02030a 100%);
+      padding: 28px;
+    }
+
+    .app {
+      max-width: 1360px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(320px, 470px) 1fr;
+      gap: 22px;
+      align-items: start;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      padding: 28px;
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) + 8px);
+      background: linear-gradient(135deg, rgba(13, 19, 34, 0.92), rgba(10, 24, 42, 0.78));
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::after {
+      content: "";
+      position: absolute;
+      inset: -80px -100px auto auto;
+      width: 280px;
+      height: 280px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(56, 213, 255, 0.24), transparent 65%);
+      pointer-events: none;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(2rem, 4vw, 4rem);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+    }
+
+    .subtitle {
+      margin: 0;
+      max-width: 920px;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .panel {
+      border: 1px solid var(--border);
+      background: rgba(13, 19, 34, 0.88);
+      backdrop-filter: blur(14px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .controls {
+      padding: 20px;
+      display: grid;
+      gap: 16px;
+      position: sticky;
+      top: 18px;
+    }
+
+    .control { display: grid; gap: 8px; }
+
+    label {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #b7def0;
+      font-weight: 700;
+    }
+
+    select, input, textarea {
+      width: 100%;
+      border: 1px solid rgba(146, 167, 189, 0.25);
+      border-radius: 12px;
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 12px 13px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    textarea { min-height: 78px; resize: vertical; }
+
+    select:focus, input:focus, textarea:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(56, 213, 255, 0.12);
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 13px;
+      padding: 12px 14px;
+      font-weight: 800;
+      cursor: pointer;
+      color: #031018;
+      background: linear-gradient(135deg, var(--cyan), var(--teal));
+      box-shadow: 0 10px 28px rgba(56, 213, 255, 0.2);
+    }
+
+    button.secondary {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: none;
+    }
+
+    button:hover { transform: translateY(-1px); }
+
+    .output-wrap { padding: 20px; display: grid; gap: 16px; }
+
+    .preview-card {
+      border-radius: var(--radius);
+      padding: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.02)), var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .preview-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    h2 { margin: 0; font-size: 1rem; letter-spacing: -0.02em; }
+
+    .pill {
+      font-size: 0.72rem;
+      color: #001018;
+      background: var(--cyan);
+      padding: 5px 8px;
+      border-radius: 999px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #dbf7ff;
+      line-height: 1.55;
+      font-size: 0.94rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .mini-card {
+      background: rgba(255,255,255,0.045);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .mini-card h3 {
+      margin: 0 0 6px;
+      color: var(--cyan);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    .mini-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.87rem;
+      line-height: 1.45;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%) translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+      padding: 12px 16px;
+      border-radius: 999px;
+      background: rgba(5, 7, 13, 0.92);
+      border: 1px solid var(--border);
+      color: var(--text);
+      transition: 220ms ease;
+      box-shadow: var(--shadow);
+    }
+
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 980px) {
+      body { padding: 16px; }
+      .app { grid-template-columns: 1fr; }
+      .controls { position: relative; top: auto; }
+      .mini-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>Internal Visualization Prompt Generator</h1>
+      <p class="subtitle">A multi-dropdown prompt builder for making internals-visible imagery across <strong>biological</strong> or <strong>mechanical</strong> subjects: X-rays, cutaways, transparent shells, exploded diagrams, educational anatomy plates, service-manual views, and more. Same clever framework, less plant cosplay.</p>
+    </header>
+
+    <section class="panel controls" aria-label="Prompt controls">
+      <div class="control">
+        <label for="subjectType">Subject type</label>
+        <select id="subjectType">
+          <option value="biological">Biological</option>
+          <option value="mechanical">Mechanical</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label for="subjectInput">Subject</label>
+        <input id="subjectInput" value="full human body" />
+      </div>
+
+      <div class="control">
+        <label for="sourceUse">Source image use</label>
+        <select id="sourceUse">
+          <option value="Use the uploaded image as the pose, body-position, gesture, silhouette, and framing reference. Preserve the overall pose and visual identity while transforming the subject into an internal-structure visualization.">Pose and framing reference</option>
+          <option value="Use the uploaded image only as loose inspiration for silhouette and composition. The final visualization may become cleaner, more symmetrical, and more diagrammatic.">Loose inspiration</option>
+          <option value="Use the uploaded image as a strict composition reference. Preserve body or object angle, gesture, and scale while replacing the original environment with a minimal technical or clinical background.">Strict composition match</option>
+          <option value="Ignore the original environment and use only the main subject as reference. Rebuild the result as a clean studio or educational internal-view study.">Subject only, ignore environment</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label for="visualMode">Visualization mode</label>
+        <select id="visualMode">
+          <option value="X-ray style visualization">X-ray</option>
+          <option value="cutaway illustration">Cutaway</option>
+          <option value="cross-sectional study">Cross-section</option>
+          <option value="transparent-shell visualization">Transparent shell</option>
+          <option value="exploded-view diagram">Exploded view</option>
+          <option value="service-manual-style technical diagram">Service manual diagram</option>
+          <option value="medical atlas style anatomical plate">Medical atlas plate</option>
+          <option value="Popular Mechanics style how-it-works poster">Popular Mechanics poster</option>
+          <option value="National Geographic style infographic cutaway">Nat Geo infographic cutaway</option>
+          <option value="CAD-style section render">CAD section render</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label for="detailFocus">Internal detail focus</label>
+        <select id="detailFocus">
+          <option value="Show the major internal structures clearly with high legibility and strong visual hierarchy.">General internals</option>
+          <option value="Prioritize skeletal or structural elements, showing the load-bearing or frame-like internal structure prominently.">Skeleton / structure emphasis</option>
+          <option value="Prioritize organs, soft-tissue systems, fluid pathways, power paths, or process flow, making the internal operation clearly visible.">Organs / process flow emphasis</option>
+          <option value="Show layered subsystems clearly, separating structural, functional, and support components so each layer is easy to read.">Layered systems emphasis</option>
+          <option value="Show all major components in organized assembly order so the viewer can understand how the system goes together.">Assembly order emphasis</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label for="domainSpecific">Subject-specific detailing</label>
+        <select id="domainSpecific">
+          <option value="For biological subjects, include recognizable anatomy and major internal systems appropriate to the subject. For mechanical subjects, include the key components, assemblies, and pathways appropriate to the device or machine.">Balanced default</option>
+          <option value="Use a biologically accurate treatment for living subjects, with anatomically coherent bones, organs, tissues, or vascular structures. For mechanical subjects, translate that same rigor into engineering-accurate parts, housings, fasteners, and internal mechanisms.">Accuracy-first</option>
+          <option value="Emphasize educational clarity over ultra-fine realism, simplifying the subject into readable internal forms while keeping the major structures correct.">Educational clarity</option>
+          <option value="Emphasize dense internal detail, showing fine internal anatomy or intricate mechanical complexity with a premium high-resolution technical look.">Dense high-detail</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label for="backgroundStyle">Background</label>
+        <select id="backgroundStyle">
+          <option value="Dark black or near-black background. Remove the original environment entirely. No scenery, props, clutter, labels, or distractions.">Pure black</option>
+          <option value="Minimal museum-display background with generous negative space and no visible environment.">Museum display</option>
+          <option value="Clean white background, like a textbook plate or service manual page, with no clutter.">White educational plate</option>
+          <option value="Technical blueprint-style background with restrained visual texture and a clean presentation.">Blueprint background</option>
+          <option value="Clinical scan background with no scenery and a quiet, diagnostic presentation.">Clinical scan background</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label for="lightingStyle">Lighting / rendering</label>
+        <select id="lightingStyle">
+          <option value="Use luminous internal highlighting, crisp edges, and subtle layered translucency so the internal structures are easy to read.">Luminous layered clarity</option>
+          <option value="Use cool radiographic tones, high contrast, and soft glow for an X-ray or scan-like appearance.">Radiographic glow</option>
+          <option value="Use neutral technical rendering with crisp surfaces and clear section lines, like a premium educational or engineering illustration.">Neutral technical rendering</option>
+          <option value="Use polished editorial lighting with strong contrast, clean surface separation, and premium print-quality clarity.">Editorial clarity</option>
+          <option value="Use CAD-style realism with precise geometry, subtle material definition, and clean section cuts.">CAD realism</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label for="compositionStyle">Composition</label>
+        <select id="compositionStyle">
+          <option value="Use a full-subject composition, centered in frame, with clear visibility of the internal structures and balanced negative space.">Centered full subject</option>
+          <option value="Use a poster-style layout with a strong hero subject and enough empty space for a clean educational feel.">Poster layout</option>
+          <option value="Use a diagrammatic composition with the subject isolated and arranged for maximum readability rather than dramatic effect.">Diagrammatic clarity</option>
+          <option value="Use a premium product-style composition, isolated in frame, clean and precise, with no clutter.">Product-style isolation</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label for="paletteStyle">Color palette</label>
+        <select id="paletteStyle">
+          <option value="Use black, cyan, blue, teal, and luminous white if the visualization is radiographic or futuristic.">Radiographic cyan-blue</option>
+          <option value="Use monochrome grayscale with white highlights for a clinical or technical look.">Monochrome clinical</option>
+          <option value="Use restrained naturalistic tones if the visualization is educational, anatomical, or mechanical cutaway based.">Naturalistic educational</option>
+          <option value="Use blueprint white-on-blue tones if the presentation leans schematic or engineering-oriented.">Blueprint white-on-blue</option>
+          <option value="Use clean editorial colors with controlled contrast and premium publication aesthetics.">Editorial publication</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label for="moodStyle">Mood</label>
+        <select id="moodStyle">
+          <option value="scientific, refined, clear, and informative">Scientific and refined</option>
+          <option value="technical, precise, and instructional">Technical and instructional</option>
+          <option value="futuristic, polished, and high-tech">Futuristic and high-tech</option>
+          <option value="museum-quality, elegant, and quietly dramatic">Museum-quality and elegant</option>
+          <option value="editorial, premium, and visually compelling">Editorial and premium</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label for="extraNotes">Extra custom notes</label>
+        <textarea id="extraNotes" placeholder="Optional: add subject-specific details, labels, restrictions, or layout instructions here."></textarea>
+      </div>
+
+      <div class="button-row">
+        <button id="copyPrompt">Copy Prompt</button>
+        <button id="resetForm" class="secondary">Reset</button>
+      </div>
+    </section>
+
+    <section class="panel output-wrap" aria-label="Generated prompt output">
+      <div class="preview-card">
+        <div class="preview-title">
+          <h2>Generated Prompt</h2>
+          <span class="pill">LIVE OUTPUT</span>
+        </div>
+        <pre id="promptOutput"></pre>
+      </div>
+
+      <div class="mini-grid">
+        <article class="mini-card">
+          <h3>Biological Subjects</h3>
+          <p>Use it for anatomy, organs, animal structures, plants, bones, tissues, leaf cross-sections, insects, skulls, and anything else evolution cobbled together.</p>
+        </article>
+        <article class="mini-card">
+          <h3>Mechanical Subjects</h3>
+          <p>Use it for engines, tools, watches, pumps, drills, smartphones, appliances, cameras, vehicles, housings, and service-manual style breakdowns.</p>
+        </article>
+        <article class="mini-card">
+          <h3>Generator Logic</h3>
+          <p>Each dropdown replaces a section of the final prompt: subject type, rendering style, internal detail, background, lighting, palette, mood, and composition.</p>
+        </article>
+        <article class="mini-card">
+          <h3>Usage Tip</h3>
+          <p>For image models, paste the full generated prompt. For stricter tools, paste the main prompt first and the negative prompt separately if needed.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast">Prompt copied to clipboard.</div>
+
+  <script>
+    const fields = [
+      "subjectType",
+      "subjectInput",
+      "sourceUse",
+      "visualMode",
+      "detailFocus",
+      "domainSpecific",
+      "backgroundStyle",
+      "lightingStyle",
+      "compositionStyle",
+      "paletteStyle",
+      "moodStyle",
+      "extraNotes"
+    ];
+
+    function getNegativePrompt(subjectType, visualMode) {
+      const typePrompt = subjectType === "biological"
+        ? "No gore, no blood, no exposed flesh, no horror, no injury, no extra limbs, no missing anatomy, no deformed anatomy, no parasites, no grotesque body horror."
+        : "No broken parts unless requested, no impossible mechanisms, no floating unrelated components, no warped geometry, no unrealistic assembly logic, no random extra parts.";
+
+      const modePrompt = visualMode.includes("exploded")
+        ? " Keep the exploded spacing organized and assembly logic clear."
+        : "";
+
+      return `${typePrompt} No cluttered background, no random scenery, no sloppy labels, no unreadable text, no cartoon style, no messy glow effects, no opaque exterior blocking the internal structures.${modePrompt}`;
+    }
+
+    function value(id) {
+      return document.getElementById(id).value.trim();
+    }
+
+    function buildPrompt() {
+      const subjectType = value("subjectType") || "biological";
+      const subject = value("subjectInput") || (subjectType === "biological" ? "full human body" : "mechanical assembly");
+      const extra = value("extraNotes");
+      const visualMode = value("visualMode");
+      const negativePrompt = getNegativePrompt(subjectType, visualMode);
+
+      const typeSentence = subjectType === "biological"
+        ? `A ${subject} rendered as a ${visualMode}, showing the internal biological structures in a clear, accurate, and visually compelling way.`
+        : `A ${subject} rendered as a ${visualMode}, showing the internal mechanical components and system relationships in a clear, accurate, and visually compelling way.`;
+
+      const prompt = `TITLE:\nInternal Visualization Prompt Generator Output\n\nSOURCE IMAGE USE:\n${value("sourceUse")}\n\nSUBJECT TYPE:\n${subjectType}\n\nSUBJECT:\n${typeSentence}\n\nMAIN PROMPT:\nCreate a ${visualMode} of ${subject}. ${value("detailFocus")} ${value("domainSpecific")} ${value("lightingStyle")} ${value("backgroundStyle")} ${value("compositionStyle")} ${value("paletteStyle")} The final result should feel ${value("moodStyle")}.\n\nSTYLE NOTES:\nMake the visualization educational, coherent, and internally believable for the subject. Prioritize clarity, legibility, and strong visual hierarchy over unnecessary visual chaos.\n\n${extra ? `EXTRA NOTES:\n${extra}\n\n` : ""}NEGATIVE PROMPT:\n${negativePrompt}`;
+
+      document.getElementById("promptOutput").textContent = prompt;
+      return prompt;
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.setTimeout(() => toast.classList.remove("show"), 1800);
+    }
+
+    fields.forEach(id => {
+      document.getElementById(id).addEventListener("input", buildPrompt);
+      document.getElementById(id).addEventListener("change", buildPrompt);
+    });
+
+    document.getElementById("copyPrompt").addEventListener("click", async () => {
+      const prompt = buildPrompt();
+      try {
+        await navigator.clipboard.writeText(prompt);
+        showToast("Prompt copied to clipboard.");
+      } catch (error) {
+        showToast("Copy failed. Select the text manually.");
+      }
+    });
+
+    document.getElementById("resetForm").addEventListener("click", () => {
+      document.getElementById("subjectType").selectedIndex = 0;
+      document.getElementById("subjectInput").value = "full human body";
+      document.getElementById("extraNotes").value = "";
+      document.querySelectorAll("select").forEach(select => {
+        if (select.id !== "subjectType") select.selectedIndex = 0;
+      });
+      buildPrompt();
+      showToast("Template reset.");
+    });
+
+    document.getElementById("subjectType").addEventListener("change", (event) => {
+      const input = document.getElementById("subjectInput");
+      if (!input.value || input.value === "full human body" || input.value === "mechanical assembly") {
+        input.value = event.target.value === "biological" ? "full human body" : "mechanical assembly";
+      }
+      buildPrompt();
+    });
+
+    buildPrompt();
+  </script>
+</body>
+</html>
