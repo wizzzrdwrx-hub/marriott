@@ -6,17 +6,18 @@
   <title>Advanced Visualization Prompt Generator</title>
   <style>
     :root {
-      --bg: #03050a;
-      --surface: #0a0e17;
-      --surface-hover: #121826;
-      --text: #f0f6fc;
-      --text-muted: #8b9bb4;
-      --primary: #38bdf8;
-      --secondary: #818cf8;
-      --accent: #2dd4bf;
-      --border: rgba(148, 163, 184, 0.1);
-      --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-      --radius: 16px;
+      --bg: #000000;
+      --surface: #0a0a0a;
+      --surface-hover: #141414;
+      --text: #ffffff;
+      --text-muted: #888888;
+      --primary: #00ffcc; /* Cyan */
+      --secondary: #ff00ff; /* Magenta */
+      --accent: #ffff00; /* Yellow */
+      --border: rgba(255, 255, 255, 0.15);
+      --shadow: 0 0 20px rgba(0, 255, 204, 0.1);
+      --radius: 0; /* Hard edges for camera hud look */
+      --hud-bracket: 15px;
     }
 
     * { box-sizing: border-box; }
@@ -24,12 +25,13 @@
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-family: 'Space Mono', 'Roboto Mono', 'Fira Code', monospace; /* Techy font */
       color: var(--text);
       background-color: var(--bg);
       background-image:
-        radial-gradient(circle at 15% 0%, rgba(56, 189, 248, 0.12), transparent 40%),
-        radial-gradient(circle at 85% 30%, rgba(129, 140, 248, 0.08), transparent 40%);
+        linear-gradient(rgba(0, 255, 204, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 204, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px; /* Grid background */
       padding: 2rem;
       line-height: 1.5;
     }
@@ -40,6 +42,27 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 2rem;
+      position: relative;
+    }
+
+    /* Global Camera Viewfinder brackets */
+    .container::before, .container::after {
+      content: '';
+      position: fixed;
+      width: 40px;
+      height: 40px;
+      border: 2px solid var(--primary);
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0.5;
+    }
+    .container::before {
+      top: 20px; left: 20px;
+      border-right: none; border-bottom: none;
+    }
+    .container::after {
+      bottom: 20px; right: 20px;
+      border-left: none; border-top: none;
     }
 
     header {
@@ -47,47 +70,96 @@
       text-align: center;
       margin-bottom: 1rem;
       padding: 3rem 2rem;
-      background: linear-gradient(180deg, rgba(10, 14, 23, 0.8) 0%, rgba(10, 14, 23, 0) 100%);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.8);
+      border: 1px solid var(--primary);
+      position: relative;
+    }
+
+    /* Crosshair in header */
+    header::before {
+      content: '+';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: rgba(255, 0, 255, 0.2);
+      font-size: 8rem;
+      pointer-events: none;
+      z-index: 0;
     }
 
     h1 {
       margin: 0 0 1rem;
-      font-size: 3rem;
-      font-weight: 800;
-      background: linear-gradient(to right, var(--primary), var(--secondary), var(--accent));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      letter-spacing: -0.02em;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
     }
 
     .subtitle {
       margin: 0 auto;
       max-width: 800px;
-      color: var(--text-muted);
-      font-size: 1.125rem;
+      color: var(--primary);
+      font-size: 1rem;
+      position: relative;
+      z-index: 1;
     }
 
     .panel {
-      background: rgba(10, 14, 23, 0.6);
-      backdrop-filter: blur(12px);
+      background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
       padding: 2rem;
-      box-shadow: var(--shadow);
+      position: relative;
+    }
+
+    /* Panel HUD Corners */
+    .panel::before, .panel::after {
+      content: '';
+      position: absolute;
+      width: var(--hud-bracket);
+      height: var(--hud-bracket);
+      border: 1px solid var(--primary);
+      opacity: 0.7;
+    }
+    .panel::before {
+      top: -1px; left: -1px;
+      border-right: none; border-bottom: none;
+    }
+    .panel::after {
+      bottom: -1px; right: -1px;
+      border-left: none; border-top: none;
     }
 
     .form-group {
       margin-bottom: 2rem;
+      position: relative;
     }
 
     .form-group h3 {
-      font-size: 1.25rem;
-      color: var(--text);
+      font-size: 1rem;
+      color: var(--primary);
       margin: 0 0 1rem;
       padding-bottom: 0.5rem;
       border-bottom: 1px solid var(--border);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Recording dot style indicator for headers */
+    .form-group h3::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background-color: var(--secondary);
+      border-radius: 50%;
     }
 
     .grid-2 {
@@ -100,22 +172,22 @@
     .control.full { grid-column: 1 / -1; }
 
     label {
-      font-size: 0.875rem;
-      font-weight: 600;
+      font-size: 0.75rem;
+      font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.1em;
     }
 
     select, input, textarea {
       width: 100%;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border);
+      border-radius: 0;
       color: var(--text);
       padding: 0.75rem 1rem;
       font-family: inherit;
-      font-size: 1rem;
+      font-size: 0.9rem;
       transition: all 0.2s;
     }
 
@@ -124,8 +196,8 @@
     select:focus, input:focus, textarea:focus {
       outline: none;
       border-color: var(--primary);
-      background: rgba(255, 255, 255, 0.05);
-      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+      background: rgba(0, 255, 204, 0.05);
+      box-shadow: inset 0 0 10px rgba(0, 255, 204, 0.1);
     }
 
     select option {
@@ -141,33 +213,44 @@
 
     button {
       flex: 1;
-      border: none;
-      border-radius: 8px;
+      border: 1px solid var(--primary);
+      border-radius: 0;
       padding: 1rem 1.5rem;
-      font-size: 1rem;
-      font-weight: 600;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
       cursor: pointer;
-      transition: transform 0.1s, filter 0.2s;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
     }
 
     button.primary {
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      color: #fff;
-      box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+      background: rgba(0, 255, 204, 0.1);
+      color: var(--primary);
+    }
+
+    button.primary:hover {
+      background: var(--primary);
+      color: #000;
+      box-shadow: 0 0 15px var(--primary);
     }
 
     button.secondary {
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--text);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: transparent;
+      color: var(--text-muted);
+      border-color: var(--border);
     }
 
-    button:hover {
-      transform: translateY(-2px);
-      filter: brightness(1.1);
+    button.secondary:hover {
+      color: var(--text);
+      border-color: var(--text);
     }
+
     button:active {
-      transform: translateY(0);
+      transform: scale(0.98);
     }
 
     .output-panel {
@@ -178,11 +261,11 @@
 
     .prompt-box {
       flex: 1;
-      background: #000;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
+      background: rgba(0, 0, 0, 0.9);
+      border: 1px solid var(--secondary);
       padding: 1.5rem;
       position: relative;
+      box-shadow: inset 0 0 20px rgba(255, 0, 255, 0.05);
     }
 
     .prompt-box-header {
@@ -190,27 +273,36 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 1rem;
+      border-bottom: 1px solid var(--secondary);
+      padding-bottom: 0.5rem;
     }
 
-    .prompt-box-header h2 { margin: 0; font-size: 1.25rem; }
+    .prompt-box-header h2 { margin: 0; font-size: 1rem; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.1em;}
 
     .badge {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       font-weight: 700;
-      background: rgba(45, 212, 191, 0.15);
-      color: var(--accent);
-      padding: 0.25rem 0.75rem;
-      border-radius: 999px;
-      letter-spacing: 0.05em;
+      background: var(--secondary);
+      color: #000;
+      padding: 0.2rem 0.5rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
     }
 
     pre {
       margin: 0;
       white-space: pre-wrap;
       word-break: break-word;
-      color: #e2e8f0;
-      font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
-      font-size: 0.9rem;
+      color: #ccc;
+      font-family: inherit;
+      font-size: 0.85rem;
       line-height: 1.6;
     }
 
@@ -221,29 +313,28 @@
     }
 
     .card {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.25rem;
-      transition: background 0.2s;
+      background: transparent;
+      border: 1px dashed var(--border);
+      padding: 1rem;
+      transition: border-color 0.2s;
     }
 
     .card:hover {
-      background: rgba(255, 255, 255, 0.04);
+      border-color: var(--primary);
     }
 
     .card h4 {
       margin: 0 0 0.5rem;
-      color: var(--primary);
-      font-size: 0.9rem;
+      color: var(--text);
+      font-size: 0.8rem;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.1em;
     }
 
     .card p {
       margin: 0;
       color: var(--text-muted);
-      font-size: 0.875rem;
+      font-size: 0.75rem;
     }
 
     .toast {
@@ -251,15 +342,15 @@
       bottom: 2rem;
       left: 50%;
       transform: translateX(-50%) translateY(100px);
-      background: #1e293b;
-      color: #fff;
+      background: var(--primary);
+      color: #000;
       padding: 1rem 2rem;
-      border-radius: 999px;
-      font-weight: 500;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 1px solid rgba(255, 255, 255, 0.1);
       z-index: 1000;
+      border: 1px solid #000;
     }
 
     .toast.show { transform: translateX(-50%) translateY(0); }
@@ -271,23 +362,23 @@
       body { padding: 1rem; }
       .grid-2 { grid-template-columns: 1fr; }
       .info-cards { grid-template-columns: 1fr; }
-      h1 { font-size: 2rem; }
+      h1 { font-size: 1.5rem; }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>Advanced Visualization Prompt Generator</h1>
-      <p class="subtitle">A comprehensive prompt architecture tool for creating detailed internal visualizations, technical diagrams, architectural cutaways, and complex structural studies.</p>
+      <h1>Photon Forcer Generator</h1>
+      <p class="subtitle">[ SYSTEM ONLINE // AWAITING PARAMETERS ]</p>
     </header>
 
     <aside class="panel">
       <div class="form-group">
-        <h3>1. Subject & Core</h3>
+        <h3>1. Subject Focus</h3>
         <div class="grid-2">
           <div class="control">
-            <label for="subjectType">Subject Domain</label>
+            <label for="subjectType">Subject Class</label>
             <select id="subjectType">
               <option value="biological">Biological / Organic</option>
               <option value="mechanical">Mechanical / Engineering</option>
@@ -296,138 +387,130 @@
             </select>
           </div>
           <div class="control">
-            <label for="subjectInput">Specific Subject</label>
+            <label for="subjectInput">Target Designation</label>
             <input id="subjectInput" value="full human body" />
           </div>
         </div>
         <div class="control">
-          <label for="sourceUse">Source Image / Base Concept Use</label>
+          <label for="sourceUse">Reference Protocol</label>
           <select id="sourceUse">
-            <option value="Use the uploaded image as strict pose/framing reference.">Strict pose/framing reference</option>
-            <option value="Use as loose inspiration for silhouette and composition.">Loose silhouette inspiration</option>
-            <option value="Ignore original environment, preserve scale/angle, add technical background.">Subject only, technical background</option>
+            <option value="Use the uploaded image as strict pose/framing reference.">Strict pose/framing match</option>
+            <option value="Use as loose inspiration for silhouette and composition.">Loose outline extraction</option>
+            <option value="Ignore original environment, preserve scale/angle, add technical background.">Isolate target, inject tech environment</option>
           </select>
         </div>
       </div>
 
       <div class="form-group">
-        <h3>2. Visualization Style</h3>
+        <h3>2. Optics & Framing</h3>
         <div class="grid-2">
           <div class="control">
-            <label for="visualMode">Primary Mode</label>
+            <label for="visualMode">Scan Mode</label>
             <select id="visualMode">
-              <option value="X-ray style visualization">X-ray / Radiographic</option>
-              <option value="cutaway illustration">Cutaway</option>
-              <option value="cross-sectional study">Cross-section</option>
-              <option value="transparent-shell visualization">Transparent Shell</option>
-              <option value="exploded-view diagram">Exploded View</option>
-              <option value="service-manual-style technical diagram">Service Manual / Schematic</option>
-              <option value="CAD-style section render">CAD Section Render</option>
-              <option value="architectural section perspective">Architectural Section Perspective</option>
+              <option value="X-ray style visualization">Radiographic / X-Ray</option>
+              <option value="cutaway illustration">Precision Cutaway</option>
+              <option value="cross-sectional study">Cross-Sectional Slice</option>
+              <option value="transparent-shell visualization">Transparent Substrate</option>
+              <option value="exploded-view diagram">Exploded Expansion</option>
+              <option value="service-manual-style technical diagram">Schematic Data View</option>
+              <option value="CAD-style section render">CAD Render Protocol</option>
+              <option value="architectural section perspective">Architectural Section</option>
             </select>
           </div>
           <div class="control">
-            <label for="cameraAngle">Camera & Framing</label>
+            <label for="cameraAngle">Lens Array Angle</label>
             <select id="cameraAngle">
-              <option value="centered hero shot">Centered Hero Shot</option>
-              <option value="isometric 3/4 angle">Isometric 3/4 View</option>
-              <option value="dynamic low-angle perspective">Dynamic Low Angle</option>
-              <option value="top-down orthographic view">Top-down Orthographic</option>
-              <option value="macro close-up on details">Macro Close-up</option>
+              <option value="centered hero shot">Centered Prime Focus</option>
+              <option value="isometric 3/4 angle">Isometric Array</option>
+              <option value="dynamic low-angle perspective">Low-Angle Force</option>
+              <option value="top-down orthographic view">Orthographic Overhead</option>
+              <option value="macro close-up on details">Macro Micro-Lens</option>
             </select>
           </div>
         </div>
       </div>
 
       <div class="form-group">
-        <h3>3. Internal Details & Lighting</h3>
+        <h3>3. Light & Penetration</h3>
         <div class="grid-2">
           <div class="control">
-            <label for="detailFocus">Structural Focus</label>
+            <label for="detailFocus">Penetration Depth</label>
             <select id="detailFocus">
-              <option value="Show major internal structures clearly with high legibility.">General Internals</option>
-              <option value="Prioritize load-bearing/skeletal framework.">Structural Framework</option>
-              <option value="Prioritize fluid pathways, energy routing, or nervous systems.">Pathways & Routing</option>
-              <option value="Show separated functional layers with extreme clarity.">Layered Subsystems</option>
+              <option value="Show major internal structures clearly with high legibility.">Standard Internal Sweep</option>
+              <option value="Prioritize load-bearing/skeletal framework.">Deep Structural Frame</option>
+              <option value="Prioritize fluid pathways, energy routing, or nervous systems.">Energy / Fluid Routing</option>
+              <option value="Show separated functional layers with extreme clarity.">Layered Stratification</option>
             </select>
           </div>
           <div class="control">
-            <label for="lightingStyle">Lighting Engine</label>
+            <label for="lightingStyle">Photon Emission</label>
             <select id="lightingStyle">
-              <option value="luminous internal highlighting, subtle subsurface scattering">Luminous & Subsurface</option>
-              <option value="cool radiographic glow with high contrast">Radiographic Glow</option>
-              <option value="neutral studio lighting, crisp ambient occlusion">Neutral Studio & AO</option>
-              <option value="dramatic volumetric lighting, cinematic shadows">Volumetric Cinematic</option>
+              <option value="luminous internal highlighting, subtle subsurface scattering">Internal Luminous Bleed</option>
+              <option value="cool radiographic glow with high contrast">High-Contrast Radiance</option>
+              <option value="neutral studio lighting, crisp ambient occlusion">Sterile Studio AO</option>
+              <option value="dramatic volumetric lighting, cinematic shadows">Volumetric Cinematic Force</option>
             </select>
           </div>
         </div>
       </div>
 
       <div class="form-group">
-        <h3>4. Aesthetic & Polish</h3>
+        <h3>4. Output Environment</h3>
         <div class="grid-2">
           <div class="control">
-            <label for="backgroundStyle">Environment</label>
+            <label for="backgroundStyle">Chamber Setting</label>
             <select id="backgroundStyle">
-              <option value="pure pitch black background, zero clutter">Pure Black</option>
-              <option value="clean white educational plate background">White Plate</option>
-              <option value="dark blueprint grid with measurement lines">Blueprint Grid</option>
-              <option value="minimalist museum display pedestal setup">Museum Display</option>
+              <option value="pure pitch black background, zero clutter">Absolute Void (Black)</option>
+              <option value="clean white educational plate background">Sterile White Plate</option>
+              <option value="dark blueprint grid with measurement lines">Calibration Grid</option>
+              <option value="minimalist museum display pedestal setup">Display Pedestal</option>
             </select>
           </div>
           <div class="control">
-            <label for="paletteStyle">Color Palette</label>
+            <label for="paletteStyle">Chroma Matrix</label>
             <select id="paletteStyle">
-              <option value="cyan, blue, and luminous white accents">Radiographic Cyan/Blue</option>
-              <option value="high-contrast grayscale with bright single-color focal points">Monochrome + Accent</option>
-              <option value="naturalistic muted tones for organic realism">Naturalistic</option>
-              <option value="synthwave neon highlights over dark metal">Cyberpunk Neon</option>
+              <option value="cyan, blue, and luminous white accents">Radiographic Cyan/Ice</option>
+              <option value="high-contrast grayscale with bright single-color focal points">Desaturated + Focus Hue</option>
+              <option value="naturalistic muted tones for organic realism">Organic Neutral</option>
+              <option value="synthwave neon highlights over dark metal">Neon Tech Noir</option>
             </select>
           </div>
         </div>
         <div class="control full">
-          <label for="extraNotes">Custom Instructions / Overrides</label>
-          <textarea id="extraNotes" placeholder="Add specific labels, precise material requests (e.g., 'brushed steel and carbon fiber'), or model-specific tags..."></textarea>
+          <label for="extraNotes">Manual Overrides</label>
+          <textarea id="extraNotes" placeholder="Inject specific tags, material constraints, or syntax overrides..."></textarea>
         </div>
       </div>
 
       <div class="actions">
-        <button id="copyPrompt" class="primary">Copy Full Prompt</button>
-        <button id="resetForm" class="secondary">Reset Defaults</button>
+        <button id="copyPrompt" class="primary">Execute Copy</button>
+        <button id="resetForm" class="secondary">Reboot Systems</button>
       </div>
     </aside>
 
     <main class="output-panel">
       <div class="prompt-box panel">
         <div class="prompt-box-header">
-          <h2>Final Prompt</h2>
-          <span class="badge">LIVE UPDATING</span>
+          <h2>Output Buffer</h2>
+          <span class="badge">REC</span>
         </div>
         <pre id="promptOutput"></pre>
       </div>
 
       <div class="info-cards">
         <div class="card">
-          <h4>Architectural & Cybernetic</h4>
-          <p>New domains allow for exploring building cross-sections or biomechanical fusions, complete with specialized negative prompts.</p>
+          <h4>Sys. Check</h4>
+          <p>Copy function now utilizes dual-layer execution. If primary clipboard API fails due to security constraints, secondary execCommand fallback deploys automatically.</p>
         </div>
         <div class="card">
-          <h4>Camera & Framing</h4>
-          <p>Added explicit camera controls (isometric, macro, orthographic) to dictate exactly how the internal structure is presented to the viewer.</p>
-        </div>
-        <div class="card">
-          <h4>Lighting Engines</h4>
-          <p>Lighting is crucial for internals. Choose between volumetric, radiographic, or clean studio lighting to separate internal layers.</p>
-        </div>
-        <div class="card">
-          <h4>Usage</h4>
-          <p>This generated text is formatted to provide maximum context to modern AI image models, establishing style, subject, and anti-patterns.</p>
+          <h4>Optics Update</h4>
+          <p>Theme overhauled to Photon Forcer specifications. High contrast optics, HUD elements engaged, typography locked to monospace data-readout protocols.</p>
         </div>
       </div>
     </main>
   </div>
 
-  <div id="toast" class="toast">Prompt copied to clipboard!</div>
+  <div id="toast" class="toast">Data Copied</div>
 
   <script>
     const fields = [
@@ -504,13 +587,46 @@ ${negativePrompt}`;
       document.getElementById(id).addEventListener("change", buildPrompt);
     });
 
+    // Fixed copy logic with fallback
     document.getElementById("copyPrompt").addEventListener("click", async () => {
-      const prompt = buildPrompt();
+      const promptText = buildPrompt();
+
+      // Attempt modern clipboard API first
+      if (navigator.clipboard && window.isSecureContext) {
+          try {
+            await navigator.clipboard.writeText(promptText);
+            showToast("Data Copied (API)");
+            return;
+          } catch (error) {
+            console.warn("Clipboard API failed, falling back...", error);
+          }
+      }
+
+      // Fallback for insecure contexts (like some local testing or iframes)
       try {
-        await navigator.clipboard.writeText(prompt);
-        showToast("Prompt copied to clipboard!");
-      } catch (error) {
-        showToast("Copy failed. Select the text manually.");
+          const textArea = document.createElement("textarea");
+          textArea.value = promptText;
+
+          // Move out of screen to avoid scrolling
+          textArea.style.position = "fixed";
+          textArea.style.left = "-999999px";
+          textArea.style.top = "-999999px";
+
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+
+          const successful = document.execCommand('copy');
+          document.body.removeChild(textArea);
+
+          if (successful) {
+              showToast("Data Copied (Fallback)");
+          } else {
+              showToast("Copy Failed.");
+          }
+      } catch (err) {
+          console.error('Fallback copy failed', err);
+          showToast("Copy Error.");
       }
     });
 
@@ -534,7 +650,7 @@ ${negativePrompt}`;
       }
 
       buildPrompt();
-      showToast("Template reset.");
+      showToast("Systems Rebooted.");
     });
 
     document.getElementById("subjectType").addEventListener("change", (event) => {
@@ -542,7 +658,6 @@ ${negativePrompt}`;
       const type = event.target.value;
       const current = input.value.toLowerCase();
 
-      // Auto-update subject input if it looks like a default
       if (current === "full human body" || current === "complex engine" || current === "modern skyscraper" || current === "android prototype" || current === "") {
         input.value = type === "biological" ? "full human body" :
                       type === "mechanical" ? "complex engine" :
