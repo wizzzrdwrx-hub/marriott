@@ -517,6 +517,17 @@
       "subjectType", "subjectInput", "sourceUse", "visualMode", "cameraAngle",
       "detailFocus", "lightingStyle", "backgroundStyle", "paletteStyle", "extraNotes"
     ];
+    // This script runs after the static form, so the controls are already available.
+    const elements = Object.fromEntries(
+      [...fields, "promptOutput", "toast", "copyPrompt", "resetForm"]
+        .map(id => [id, document.getElementById(id)])
+    );
+    const DEFAULT_SUBJECTS = {
+      biological: "full human body",
+      mechanical: "complex engine",
+      architectural: "modern skyscraper",
+      cybernetic: "android prototype"
+    };
 
     function getNegativePrompt(subjectType, visualMode) {
       let baseNegative = "cluttered background, random scenery, sloppy labels, unreadable text, cartoon style, messy effects, opaque exterior blocking internals, ";
@@ -539,16 +550,14 @@
     }
 
     function value(id) {
-      return document.getElementById(id).value.trim();
+      return elements[id].value.trim();
     }
 
     function buildPrompt() {
       const subjectType = value("subjectType");
       let subject = value("subjectInput");
       if (!subject) {
-        subject = subjectType === "biological" ? "full human body" :
-                  subjectType === "mechanical" ? "complex engine" :
-                  subjectType === "architectural" ? "modern skyscraper" : "android prototype";
+        subject = DEFAULT_SUBJECTS[subjectType];
       }
 
       const extra = value("extraNotes");
@@ -571,24 +580,26 @@ Use a ${value("backgroundStyle")}. The color palette should feature ${value("pal
 ${extra ? `[CUSTOM NOTES]:\n${extra}\n\n` : ""}[NEGATIVE PROMPT]:
 ${negativePrompt}`;
 
-      document.getElementById("promptOutput").textContent = prompt;
+      elements.promptOutput.textContent = prompt;
       return prompt;
     }
 
+    let toastTimeout;
     function showToast(message) {
-      const toast = document.getElementById("toast");
+      const toast = elements.toast;
+      clearTimeout(toastTimeout);
       toast.textContent = message;
       toast.classList.add("show");
-      setTimeout(() => toast.classList.remove("show"), 2000);
+      toastTimeout = setTimeout(() => toast.classList.remove("show"), 2000);
     }
 
     fields.forEach(id => {
-      document.getElementById(id).addEventListener("input", buildPrompt);
-      document.getElementById(id).addEventListener("change", buildPrompt);
+      elements[id].addEventListener("input", buildPrompt);
+      elements[id].addEventListener("change", buildPrompt);
     });
 
     // Fixed copy logic with fallback
-    document.getElementById("copyPrompt").addEventListener("click", async () => {
+    elements.copyPrompt.addEventListener("click", async () => {
       const promptText = buildPrompt();
 
       // Attempt modern clipboard API first
@@ -603,8 +614,10 @@ ${negativePrompt}`;
       }
 
       // Fallback for insecure contexts (like some local testing or iframes)
+      const previousFocus = document.activeElement;
+      let textArea;
       try {
-          const textArea = document.createElement("textarea");
+          textArea = document.createElement("textarea");
           textArea.value = promptText;
 
           // Move out of screen to avoid scrolling
@@ -617,8 +630,6 @@ ${negativePrompt}`;
           textArea.select();
 
           const successful = document.execCommand('copy');
-          document.body.removeChild(textArea);
-
           if (successful) {
               showToast("Data Copied (Fallback)");
           } else {
@@ -627,13 +638,20 @@ ${negativePrompt}`;
       } catch (err) {
           console.error('Fallback copy failed', err);
           showToast("Copy Error.");
+      } finally {
+          // execCommand can throw; always remove the temporary control and
+          // return keyboard focus to the control that initiated the copy.
+          if (textArea) textArea.remove();
+          if (previousFocus instanceof HTMLElement) {
+              previousFocus.focus({ preventScroll: true });
+          }
       }
     });
 
-    document.getElementById("resetForm").addEventListener("click", () => {
-      document.getElementById("subjectType").value = "biological";
-      document.getElementById("subjectInput").value = "full human body";
-      document.getElementById("extraNotes").value = "";
+    elements.resetForm.addEventListener("click", () => {
+      elements.subjectType.value = "biological";
+      elements.subjectInput.value = DEFAULT_SUBJECTS.biological;
+      elements.extraNotes.value = "";
 
       const defaults = {
         "sourceUse": "Use the uploaded image as strict pose/framing reference.",
@@ -646,22 +664,20 @@ ${negativePrompt}`;
       };
 
       for (const [key, val] of Object.entries(defaults)) {
-        document.getElementById(key).value = val;
+        elements[key].value = val;
       }
 
       buildPrompt();
       showToast("Systems Rebooted.");
     });
 
-    document.getElementById("subjectType").addEventListener("change", (event) => {
-      const input = document.getElementById("subjectInput");
+    elements.subjectType.addEventListener("change", (event) => {
+      const input = elements.subjectInput;
       const type = event.target.value;
-      const current = input.value.toLowerCase();
+      const current = input.value.trim().toLowerCase();
 
-      if (current === "full human body" || current === "complex engine" || current === "modern skyscraper" || current === "android prototype" || current === "") {
-        input.value = type === "biological" ? "full human body" :
-                      type === "mechanical" ? "complex engine" :
-                      type === "architectural" ? "modern skyscraper" : "android prototype";
+      if (Object.values(DEFAULT_SUBJECTS).includes(current) || current === "") {
+        input.value = DEFAULT_SUBJECTS[type];
       }
       buildPrompt();
     });

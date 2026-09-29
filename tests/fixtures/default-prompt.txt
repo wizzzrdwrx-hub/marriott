@@ -1,0 +1,15 @@
+[CONCEPT]: X-ray style visualization of a full human body (biological subject)
+[CAMERA/LAYOUT]: centered hero shot
+[REFERENCE USE]: Use the uploaded image as strict pose/framing reference.
+
+[CORE DESCRIPTION]:
+Create a highly detailed X-ray style visualization of a full human body. Show major internal structures clearly with high legibility. The viewer must be able to clearly see the internal architecture, components, and relationships.
+
+[LIGHTING & RENDERING]:
+Render using luminous internal highlighting, subtle subsurface scattering. Ensure clean surface separation.
+
+[ENVIRONMENT & PALETTE]:
+Use a pure pitch black background, zero clutter. The color palette should feature cyan, blue, and luminous white accents. Prioritize clarity, legibility, and a strong visual hierarchy over unnecessary visual chaos.
+
+[NEGATIVE PROMPT]:
+cluttered background, random scenery, sloppy labels, unreadable text, cartoon style, messy effects, opaque exterior blocking internals, gore, blood, exposed flesh, horror, injury, deformed anatomy, body horror

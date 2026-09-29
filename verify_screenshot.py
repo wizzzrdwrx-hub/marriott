@@ -1,21 +1,23 @@
 import asyncio
 from playwright.async_api import async_playwright
-import os
+from pathlib import Path
 
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
         page = await browser.new_page()
 
-        await page.goto("file:///app/index.html")
-        await page.wait_for_load_state("networkidle")
+        root = Path(__file__).resolve().parent
+        await page.goto((root / "index.html").as_uri())
 
-        os.makedirs("/home/jules/verification", exist_ok=True)
-        screenshot_path = "/home/jules/verification/index_verification.png"
+        output = root / "verification"
+        output.mkdir(exist_ok=True)
+        screenshot_path = output / "index_verification.png"
 
         await page.screenshot(path=screenshot_path, full_page=True)
         print(f"Screenshot saved to {screenshot_path}")
 
         await browser.close()
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
